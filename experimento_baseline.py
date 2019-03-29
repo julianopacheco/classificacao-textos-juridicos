@@ -40,7 +40,8 @@ from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.linear_model import LogisticRegression  # Logistic Regression
-from sklearn.cross_validation import train_test_split # Para dividir o conjunto de treinamento e teste
+# from sklearn.cross_validation import train_test_split # Para dividir o conjunto de treinamento e teste
+from sklearn.model_selection import train_test_split # Para dividir o conjunto de treinamento e teste
 from sklearn.neighbors import KNeighborsClassifier  # K nearest neighbours
 from sklearn import svm  # Para o algoritmo Support Vector Machine (SVM) Algorithm
 from sklearn import metrics # Para verificar as métricas
@@ -48,6 +49,9 @@ from sklearn.tree import DecisionTreeClassifier # para o algoritmo de árvores d
 from sklearn.neural_network import MLPClassifier # Para as redes neurais
 from sklearn import ensemble, naive_bayes, neighbors, svm, tree
 from sklearn.preprocessing import MinMaxScaler
+
+# adicionado
+nltk.download('stopwords')
 
 
 # In[ ]:
@@ -66,6 +70,15 @@ def beep():
 
 
 def read_json_file(path, enc='utf8'):
+    # adicionado trecho
+    myFile = open(path, 'r')
+    myObject = myFile.read()
+    u = myObject.encode().decode('utf-8-sig')
+    myObject = u.encode('utf-8')
+    myFile.encoding
+    myFile.close()
+    # alterado o valor de path
+    path = myObject
     with codecs.open(path, encoding=enc) as j:
         data_json = json.load(j)
     return data_json
@@ -177,14 +190,14 @@ punct = string.punctuation
 # In[12]:
 
 
-data_civil = read_json_file('C:/Users/allanbs/Documents/Git/RicardoDissertacao/dados/Formato Json/Civel.json')
-
+# data_civil = read_json_file('C:/Users/allanbs/Documents/Git/RicardoDissertacao/dados/Formato Json/Civel.json')
+data_civil = read_json_file('arquivos/json/civel.json')
 
 # In[13]:
 
 
-data_crime = read_json_file('C:/Users/allanbs/Documents/Git/RicardoDissertacao/dados/Formato Json/Crime.json')
-
+# data_crime = read_json_file('C:/Users/allanbs/Documents/Git/RicardoDissertacao/dados/Formato Json/Crime.json')
+data_crime = read_json_file('arquivos/json/crime.json')
 
 # In[14]:
 

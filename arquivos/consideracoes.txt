@@ -1,0 +1,67 @@
+Considerações:
+==============
+
+a) As 15.000 ementas passaram por um processo de enxugamento de ementas duplicadas ou muito similares.
+   Após o enxugamento, cada coleção de 15.000 ementas transformaram-se em 6.000 ementas distintas.
+
+b) As ementas são em sua maioria do ano de 2018 e parte delas do ano passado (2017).
+
+c) Cada ementa, possui pelo menos 2.000 caracteres, considerando espaços em branco (praticamente, equivale a meia página do Word por ementa).
+   Alguns assuntos, possuem a característica de ementas curtas, por isso, textos maiores poderiam ocasinar a perda de palavras próprias a esses assuntos.
+   Eventualmente, se necessário, podemos realizar uma nova coleta com mais de 2.500 caracteres para obtermos textos ainda mais extensos.
+   A contagem de caracteres inclui as tabulações e os espaços em branco entre as palavras. 
+
+d) O Código_Tribunal = 3, significa que somenente decisões do Tribunal de Justiça foram selecionadas (decisões de Turmas Recursais ou do Tribunal de Alçada, por exemplo, não entram).
+
+e) O Caput (preâmbulo) foi mantido em cada caso.
+
+f) As decisões estão ordenadas pela data crescente de julgamento.
+   Observou-se, que em um mesmo dia (data), havia uma tendência em repetir as decisões em processos semelhantes.
+   Algumas das repetições foram identificadas e removidas, através do uso de heurísticas e observações.
+
+g) A quantidade de ementas é a mesma para ambas as classes (Balanceamento de classe).
+
+h) Os arquivos que foram gerados estão no formato do Excel (.xlsx) e no formato json.
+   No Excel a tecla F2 expande a célula que contem o conteúdo da ementa	para leitua.
+   Para leitura no formato json é importante o uso de um software semelhante ao NotePad++
+   No caso dos arquivos (.json.txt) a coluna data de julgamento foi suprimida para facilitar posteriormete.
+   O Formato .csv também pode ser fornecido (não foi incluído no material, nesse momento, para não aumentar muito o seu tamanho).
+
+i) As 15.000 ementas originais também podem ser fornecidas, a qualquer momento, se for o caso de um corpus maior (embora mais redundante).
+
+==============
+
+15.000 ementas Cíveis => Processo de Enxugamento => 6.000 Ementas Cíveis
+15.000 ementas Criminais => Processo de Enxugamento => 6.000 Ementas Criminais.
+O Processo de minimização da redundância, visa facilitar a justa contagem das palavras para o futuro cálculo TF/IDF (de ponderação dos Termos).
+
+Abaixo seguem, as consultas recuperadas pelo Banco de Dados Oracle alimentado pelo Sistema JPRUD do Tribunal de Justiça do Estado.
+
+SQL para 15.000 Ementas Cíveis:
+===============================
+
+SELECT NUMERO_PROCESSO, EMENTA, DATA_JULG
+FROM JPRUD.EMENTAS
+WHERE COD_TRIBUNAL = 3 
+AND SECAO LIKE 'CIVEL'
+AND LENGTH(EMENTA) >= 2000
+AND DATA_JULG >= '01-12-2017'
+AND ROWNUM <= 15000
+ORDER BY DATA_JULG;
+
+SQL para 15.000 Ementas Criminais:
+==================================
+
+SELECT NUMERO_PROCESSO, EMENTA, DATA_JULG
+FROM JPRUD.EMENTAS
+WHERE COD_TRIBUNAL = 3 
+AND SECAO LIKE 'CRIME'
+AND LENGTH(EMENTA) >= 2000
+AND DATA_JULG >= '01-02-2017'
+AND ROWNUM <= 15000
+ORDER BY DATA_JULG;
+
+==================================
+
+Atenciosamente,
+Ricardo H. Fernandes.
