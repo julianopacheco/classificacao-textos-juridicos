@@ -9,6 +9,8 @@ Original file is located at
 efetua os imports das dependencias
 """
 
+!pip install unidecode
+
 import pandas as pd
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
@@ -21,22 +23,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Normalizer
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
+import unidecode as unidecode
+
+nltk.download('stopwords')
+  nltk.download('rslp')
+  nltk.download('wordnet')
 
 """importa os dados do arquivo excel referente ao civil e adiciona a coluna CLASSE com o valor 0, representando o tipo de dado civil"""
 
 uri_data_civel = 'https://github.com/julianopacheco/classificacao-textos-juridicos/blob/master/arquivos/xls/civel.xlsx?raw=true'
 dados_civil = pd.read_excel(uri_data_civel)
 dados_civil["CLASSE"] = 0
+dados_civil.corr()
 
 """importa os dados do arquivo excel referente ao crime e adiciona a coluna CLASSE com o valor 1, representando o tipo de dado crime"""
 
 uri_data_crime = 'https://github.com/julianopacheco/classificacao-textos-juridicos/blob/master/arquivos/xls/crime.xlsx?raw=true'
 dados_crime = pd.read_excel(uri_data_crime)
 dados_crime["CLASSE"] = 1
+dados_crime.corr()
 
 """concatena as duas fontes de dados e gera uma nova contendo as duas"""
 
 dados_civil_e_crime = pd.concat([dados_civil, dados_crime], axis=0)
+
+dados_civil_e_crime.corr()
 
 """como agora a fonte de dados contem as duas listas e necessário embaralhar elas para que o civil e crime nao venha na ordem que foram concatenados
 
@@ -44,15 +55,35 @@ isso e feito com o shuffle
 """
 
 dados_civil_e_crime = shuffle(dados_civil_e_crime)
-dados_civil_e_crime.head()
+
+dados_civil_e_crime[['EMENTA', 'CLASSE']].head()
 
 """verifica a proporcionalidade de cada um dos tipos (civil = 0, crime = 1)"""
+
+def removeCaput(text):
+        
+    words = text.split()
+    
+    sem_caput = []
+    for w in words:
+        if not w.isupper():
+            sem_caput.append(w)
+    
+    result = ''
+    for w in sem_caput:
+        result = result + w + ' '
+    return result
+
+dados_civil_e_crime_sem_caput = [removeCaput(texto) for texto in dados_civil_e_crime["EMENTA"]]
+dados_civil_e_crime["EMENTA_SEM_VERBATIZACAO"] = dados_civil_e_crime_sem_caput
+
+dados_civil_e_crime[['EMENTA', 'EMENTA_SEM_VERBATIZACAO', 'CLASSE']].head()
 
 dados_civil_e_crime.CLASSE.value_counts()
 
 """extrai as ementas dos dados"""
 
-ementas = dados_civil_e_crime["EMENTA"]
+ementas = dados_civil_e_crime["EMENTA_SEM_VERBATIZACAO"]
 
 """efetua o join das frases e junta todas as palavras de todas as frases n variavel all_words, escreve o total e monta a nuvem de palavras que será desenhada no próximo bloco de código"""
 
@@ -78,3 +109,78 @@ desenha_palavras(nuvem_palavras_crime)
 
 nuvem_palavras_civil_crime = gera_nuvem_palavras(dados_civil_e_crime.EMENTA)
 desenha_palavras(nuvem_palavras_civil_crime)
+
+nuvem_palavras_civil_crime_sem_verbatizacao = gera_nuvem_palavras(dados_civil_e_crime.EMENTA_SEM_VERBATIZACAO)
+desenha_palavras(nuvem_palavras_civil_crime_sem_verbatizacao)
+
+"""metodo para tokenizar as palavras das frases e gerar a frequencia de cada palavra"""
+
+import nltk as nltk
+from nltk import tokenize
+tokenizador = tokenize.WhitespaceTokenizer()
+def gera_frequencia(tokenizador, textos):
+  texto_tokenizado = tokenizador.tokenize(' '.join(textos))
+  frequencia = nltk.FreqDist(texto_tokenizado)
+  df_frequencia = pd.DataFrame({"Palavra": list(frequencia.keys()),
+                                "Frequencia": list(frequencia.values())})
+  df_frequencia15 = df_frequencia.nlargest(columns = "Frequencia", n = 20)
+  print(df_frequencia15)
+  return df_frequencia15
+
+"""metodo que escreve um grafico pareto das frequencias recebidas"""
+
+def escreve_pareto(df_frequencia):
+  import seaborn as sns
+  plt.figure(figsize=(20,10))
+  ax = sns.barplot(data = df_frequencia, x = "Palavra", y = "Frequencia")
+  ax.set(ylabel = "Contagem")
+  plt.show()
+
+"""metodo que remove as stop words das frases"""
+
+import string
+stemmer = nltk.RSLPStemmer()
+from nltk.stem import WordNetLemmatizer
+wordnet_lemmatizer = WordNetLemmatizer()
+
+def remove_stopwords(tokenizador, textos):
+  stop_words = nltk.corpus.stopwords.words("portuguese")
+  stop_words.append('nao')
+  print(stop_words)
+  ementas_processadas = list()
+  for ementa in textos:
+    nova_ementa = list()
+  #  print(ementa)
+    palavras_ementa = tokenizador.tokenize(ementa)
+    
+    # remove punctuation from each word
+  #  print(palavras_ementa)
+    
+    table = str.maketrans('', '', string.punctuation)
+    stripped = [w.translate(table) for w in palavras_ementa]
+     # remove remaining tokens that are not alphabetic
+    words = [word for word in stripped if word.isalpha()]
+    
+  #  print(palavras_ementa)
+    for palavra in words:
+      if palavra.lower() not in stop_words:
+        nova_ementa.append(wordnet_lemmatizer.lemmatize(palavra))
+        #nova_ementa.append(stemmer.stem(palavra))
+        #nova_ementa.append(palavra)
+    ementas_processadas.append(' '.join(nova_ementa))
+  return ementas_processadas
+
+"""aqui utiliza os metodos anteriores para aplicar tratamento nas frases removendo as stop words e exibindo o retorno no formato de grafico posteriormente"""
+
+ementas_trat_1 = [unidecode.unidecode(texto.lower()) for texto in dados_civil_e_crime["EMENTA_SEM_VERBATIZACAO"]]
+#ementas_trat_1 = [unidecode.unidecode(texto.lower()) for texto in dados_civil_e_crime["EMENTA"]]
+dados_civil_e_crime["EMENTA_SEM_CAPUT_TRAT_1"] = ementas_trat_1
+
+punct_tokenize = tokenize.WordPunctTokenizer()
+dados_civil_e_crime['EMENTAS_PROCESSADAS'] = remove_stopwords(tokenizador, dados_civil_e_crime.EMENTA_SEM_CAPUT_TRAT_1)
+
+df_frequencia = gera_frequencia(tokenizador, dados_civil_e_crime.EMENTAS_PROCESSADAS)
+escreve_pareto(df_frequencia)
+
+nuvem_palavras_processadas = gera_nuvem_palavras(dados_civil_e_crime.EMENTAS_PROCESSADAS)
+desenha_palavras(nuvem_palavras_processadas)
